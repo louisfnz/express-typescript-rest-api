@@ -1,6 +1,6 @@
 import {Response} from 'express';
 import {v4 as uuid} from 'uuid';
-import {RequestWithUser} from '../types/express/request';
+import {RequestExtended} from '../types/express/request';
 import User from '../models/User';
 import {validateInput} from '../utilities/validate';
 import ResourceNotFoundException from '../exceptions/ResourceNotFoundException';
@@ -8,15 +8,20 @@ import {formatPaginationResults, getPaginationQueryParams} from '../utilities/pa
 import {renderEmailTemplate, sendEmail} from '../utilities/email';
 import {createHmac} from '../utilities/crypto';
 import Token from '../models/Token';
+import {hasPermission} from '../utilities/auth';
 
 export default {
-    index: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    index: async (req: RequestExtended, res: Response): Promise<Response> => {
+        req?.user && hasPermission(req.user, 'users.show');
+
         const {page, perPage} = getPaginationQueryParams(req);
         const results = await User.query().page(page, perPage);
         return res.json(formatPaginationResults(results, page, perPage));
     },
 
-    store: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    store: async (req: RequestExtended, res: Response): Promise<Response> => {
+        req?.user && hasPermission(req.user, 'users.store');
+
         const schema = {
             email: 'email|max:254|required|unique:users,email',
             first_name: 'string|required',
@@ -56,7 +61,9 @@ export default {
         return res.status(201).json(user);
     },
 
-    show: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    show: async (req: RequestExtended, res: Response): Promise<Response> => {
+        req?.user && hasPermission(req.user, 'users.show');
+
         const schema = {
             id: 'number|required',
         };
@@ -73,7 +80,9 @@ export default {
         return res.json(user);
     },
 
-    update: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    update: async (req: RequestExtended, res: Response): Promise<Response> => {
+        req?.user && hasPermission(req.user, 'users.update');
+
         const schema = {
             id: 'number|required',
             email: `email|max:254|required|unique:users,email,id,${req.params?.id}`,
@@ -103,7 +112,9 @@ export default {
         return res.json(user);
     },
 
-    destroy: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    destroy: async (req: RequestExtended, res: Response): Promise<Response> => {
+        req?.user && hasPermission(req.user, 'users.destroy');
+
         const schema = {
             id: 'number|required',
         };
@@ -113,6 +124,7 @@ export default {
         };
         const {id} = await validateInput({id: req.params.id}, schema, messages);
 
+        await Token.query().delete().where({user_id: id});
         const deleted = await User.query().deleteById(id);
         if (!deleted) throw new ResourceNotFoundException();
 

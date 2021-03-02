@@ -3,10 +3,10 @@ import * as jwt from 'jsonwebtoken';
 import User from '../models/User';
 import TokenPayload from '../types/auth/token';
 import InvalidJwtException from '../exceptions/InvalidJwtException';
-import {RequestWithUser} from '../types/express/request';
+import {RequestExtended} from '../types/express/request';
 import UserLogin from '../models/UserLogin';
 
-async function authMiddleware(req: RequestWithUser, res: Response, next: NextFunction): Promise<void> {
+const authMiddleware = async (req: RequestExtended, res: Response, next: NextFunction): Promise<void> => {
     try {
         const authHeader = req.headers['authorization'];
         if (authHeader) {
@@ -14,9 +14,18 @@ async function authMiddleware(req: RequestWithUser, res: Response, next: NextFun
             const payload = jwt.verify(token, process.env.JWT_SECRET || '') as TokenPayload;
 
             // JWT is valid, get the user
-            const user = await User.query().findOne({
-                id: payload.id,
-            });
+            const user = await User.query()
+                .findOne({
+                    id: payload.id,
+                })
+                .withGraphFetched('role')
+                .modifyGraph('role', (builder) => {
+                    builder.select(['name', 'slug']);
+                })
+                .withGraphFetched('permissions')
+                .modifyGraph('permissions', (builder) => {
+                    builder.select(['title', 'group', 'action']);
+                });
 
             if (user) {
                 // Check a valid login exists for the user
@@ -37,6 +46,6 @@ async function authMiddleware(req: RequestWithUser, res: Response, next: NextFun
     } catch (e) {
         return next(new InvalidJwtException());
     }
-}
+};
 
 export default authMiddleware;

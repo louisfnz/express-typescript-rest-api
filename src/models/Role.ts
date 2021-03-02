@@ -1,6 +1,7 @@
 import Base from './Base';
 import {Pojo} from 'objection';
 import User from './User';
+import Permission from './Permission';
 
 class Role extends Base {
     id!: number;
@@ -8,6 +9,7 @@ class Role extends Base {
     slug!: string;
 
     user!: User;
+    permissions!: Permission[];
 
     static get tableName(): string {
         return 'roles';
@@ -21,6 +23,18 @@ class Role extends Base {
                 join: {
                     from: 'roles.id',
                     to: 'users.role_id',
+                },
+            },
+            permissions: {
+                relation: Base.ManyToManyRelation,
+                modelClass: Permission,
+                join: {
+                    from: 'roles.id',
+                    through: {
+                        from: 'permission_role.role_id',
+                        to: 'permission_role.permission_id',
+                    },
+                    to: 'permissions.id',
                 },
             },
         };

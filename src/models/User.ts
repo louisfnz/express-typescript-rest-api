@@ -3,6 +3,7 @@ import Base from './Base';
 import Token from './Token';
 import UserLogin from './UserLogin';
 import Role from './Role';
+import Permission from './Permission';
 
 class User extends Base {
     id!: number;
@@ -16,7 +17,8 @@ class User extends Base {
 
     tokens!: Token[];
     user_logins!: UserLogin[];
-    role!: Role;
+    role?: Role;
+    permissions!: Permission[];
 
     static get tableName(): string {
         return 'users';
@@ -46,6 +48,18 @@ class User extends Base {
                 join: {
                     from: 'users.role_id',
                     to: 'roles.id',
+                },
+            },
+            permissions: {
+                relation: Base.ManyToManyRelation,
+                modelClass: Permission,
+                join: {
+                    from: 'users.role_id',
+                    through: {
+                        from: 'permission_role.role_id',
+                        to: 'permission_role.permission_id',
+                    },
+                    to: 'permissions.id',
                 },
             },
         };

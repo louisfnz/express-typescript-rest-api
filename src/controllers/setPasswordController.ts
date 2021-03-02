@@ -1,6 +1,6 @@
 import {Response} from 'express';
 import {v4 as uuid} from 'uuid';
-import {RequestWithUser} from '../types/express/request';
+import {RequestExtended} from '../types/express/request';
 import {validateInput} from '../utilities/validate';
 import User from '../models/User';
 import {createHmac} from '../utilities/crypto';
@@ -12,7 +12,7 @@ import * as bcrypt from 'bcrypt';
 import InvalidTokenException from '../exceptions/InvalidTokenException';
 
 export default {
-    sendSetPasswordToken: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    sendSetPasswordToken: async (req: RequestExtended, res: Response): Promise<Response> => {
         const schema = {
             email: 'email|max:254|required',
         };
@@ -46,7 +46,7 @@ export default {
         return res.json({});
     },
 
-    verifySetPasswordToken: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    verifySetPasswordToken: async (req: RequestExtended, res: Response): Promise<Response> => {
         const schema = {
             token: 'string|required',
         };
@@ -63,7 +63,7 @@ export default {
         throw new InvalidTokenException();
     },
 
-    setPassword: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    setPassword: async (req: RequestExtended, res: Response): Promise<Response> => {
         const schema = {
             token: 'string|required',
             password: 'string|required|confirmed',

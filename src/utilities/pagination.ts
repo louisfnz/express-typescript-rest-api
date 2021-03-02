@@ -1,7 +1,7 @@
-import {RequestWithUser} from '../types/express/request';
+import {RequestExtended} from '../types/express/request';
 import Objection, {Model} from 'objection';
 
-export const getPaginationQueryParams = (req: RequestWithUser): Record<string, number> => {
+export const getPaginationQueryParams = (req: RequestExtended): Record<string, number> => {
     let page: number | string =
         typeof req.query.page === 'string' && /[\d]+/.test(req.query.page) ? req.query.page : '1';
     let perPage = Number(req.query.perPage || 50);

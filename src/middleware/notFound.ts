@@ -1,9 +1,9 @@
-import {NextFunction, Response} from 'express';
-import {RequestWithUser} from '../types/express/request';
+import {NextFunction, RequestHandler, Response} from 'express';
+import {RequestExtended} from '../types/express/request';
 import ResourceNotFoundException from '../exceptions/ResourceNotFoundException';
 
-function notFoundMiddleware(req: RequestWithUser, res: Response, next: NextFunction): void {
+const notFoundMiddleware = (req: RequestExtended, res: Response, next: NextFunction): void => {
     throw new ResourceNotFoundException();
-}
+};
 
 export default notFoundMiddleware;

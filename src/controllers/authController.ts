@@ -7,7 +7,7 @@ import User from '../models/User';
 import Token from '../models/Token';
 import {extractJwt} from '../utilities/auth';
 import TokenPayload from '../types/auth/token';
-import {RequestWithUser} from '../types/express/request';
+import {RequestExtended} from '../types/express/request';
 import InvalidTokenException from '../exceptions/InvalidTokenException';
 import {validateInput} from '../utilities/validate';
 import InvalidJwtException from '../exceptions/InvalidJwtException';
@@ -16,11 +16,11 @@ import UserLogin from '../models/UserLogin';
 import {mysqlDate} from '../utilities/date';
 
 export default {
-    me: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    me: async (req: RequestExtended, res: Response): Promise<Response> => {
         return res.json(req.user);
     },
 
-    login: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    login: async (req: RequestExtended, res: Response): Promise<Response> => {
         const schema = {
             email: 'email|max:254|required',
             password: 'string|required',
@@ -74,7 +74,7 @@ export default {
         throw new InvalidCredentialsException();
     },
 
-    logout: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    logout: async (req: RequestExtended, res: Response): Promise<Response> => {
         const extractedJwt = extractJwt(req);
 
         // Invalidate user login record
@@ -87,7 +87,7 @@ export default {
         return res.json({});
     },
 
-    refresh: async (req: RequestWithUser, res: Response): Promise<Response> => {
+    refresh: async (req: RequestExtended, res: Response): Promise<Response> => {
         const schema = {
             refresh_token: 'required',
         };

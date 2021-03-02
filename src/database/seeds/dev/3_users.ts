@@ -17,7 +17,7 @@ export async function seed(): Promise<void> {
     const role = await Role.query().findOne({name: 'User'});
     const password = await bcrypt.hash('test', 12);
 
-    await User.query().insertGraphAndFetch(
+    await User.query().insertGraph(
         range(100).map(() => {
             const email = faker.internet.email();
             return {
