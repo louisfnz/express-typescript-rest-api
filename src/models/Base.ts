@@ -3,8 +3,8 @@ import {omit} from 'lodash';
 import {mysqlDate} from '../utilities/date';
 
 class Base extends Model {
-    created_at?: string;
-    updated_at?: string;
+    created_at!: string;
+    updated_at!: string;
 
     static get modelPaths(): string[] {
         return [__dirname];
