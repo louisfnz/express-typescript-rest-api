@@ -28,6 +28,15 @@ app.use(express.urlencoded({extended: false}));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+
+// Fake some lag in development
+if (process.env.NODE_ENV === 'development') {
+    app.use(
+        async (req, res, next) =>
+            new Promise((resolve) => setTimeout(() => resolve(next()), Math.floor(Math.random() * 1000) + 1)),
+    );
+}
+
 app.use(limiter);
 
 Model.knex(knex);
