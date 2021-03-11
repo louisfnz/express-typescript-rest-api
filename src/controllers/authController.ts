@@ -1,7 +1,7 @@
 import {Response} from 'express';
 import * as bcrypt from 'bcrypt';
 import {v4 as uuid} from 'uuid';
-import {addHours, getUnixTime} from 'date-fns';
+import {addHours, addMinutes, getUnixTime} from 'date-fns';
 import * as jwt from 'jsonwebtoken';
 import User from '../models/User';
 import Token from '../models/Token';
@@ -47,15 +47,17 @@ export default {
                     type: 'refresh_token',
                     token: refreshToken,
                     expires_at: mysqlDate(
-                        addHours(new Date(), parseInt(process.env.JWT_REFRESH_VALID_HOURS || '720', 10)),
+                        addMinutes(new Date(), parseInt(process.env.JWT_REFRESH_EXPIRES_MINUTES || '14400', 10)),
                     ),
                 });
 
                 // Create a JWT
-                const expires = getUnixTime(addHours(new Date(), 2));
+                const expires = getUnixTime(
+                    addMinutes(new Date(), parseInt(process.env.JWT_EXPIRES_MINUTES || '60', 10)),
+                );
                 const token = jwt.sign({id: user.id, uuid: uuid()}, process.env.JWT_SECRET || '', {
                     algorithm: 'HS256',
-                    expiresIn: `${process.env.JWT_VALID_HOURS || '2'}h`,
+                    expiresIn: `${process.env.JWT_EXPIRES_MINUTES || '60'}m`,
                 });
 
                 // Save user login record
@@ -122,14 +124,16 @@ export default {
                 });
 
             // Throw if user is undefined or no related tokens and valid logins could be found
-            if (!user || !user.tokens.length || !user.user_logins.length) throw new InvalidTokenException();
+            if (!user || !user.tokens.length || !user.user_logins.length) {
+                throw new InvalidTokenException();
+            }
 
             // Create a new refresh token and JWT
             const newRefreshToken = uuid();
-            const expires = getUnixTime(addHours(new Date(), parseInt(process.env.JWT_VALID_HOURS || '2', 10)));
+            const expires = getUnixTime(addMinutes(new Date(), parseInt(process.env.JWT_EXPIRES_MINUTES || '60', 10)));
             const newJwt = jwt.sign({id: user.id, uuid: uuid()}, process.env.JWT_SECRET as string, {
                 algorithm: 'HS256',
-                expiresIn: `${process.env.JWT_VALID_HOURS || '2'}h`,
+                expiresIn: `${process.env.JWT_EXPIRES_MINUTES || '60'}m`,
             });
 
             // Revoke old refresh token
@@ -145,7 +149,9 @@ export default {
                 user_id: user.id,
                 type: 'refresh_token',
                 token: newRefreshToken,
-                expires_at: mysqlDate(addHours(new Date(), parseInt(process.env.JWT_REFRESH_VALID_HOURS || '720', 10))),
+                expires_at: mysqlDate(
+                    addMinutes(new Date(), parseInt(process.env.JWT_REFRESH_EXPIRES_MINUTES || '14400', 10)),
+                ),
             });
 
             // Update user_logins entry
