@@ -10,8 +10,7 @@ export function extractJwt(req: Request): string {
 }
 
 export function hasPermission(user: RequestUser, permission: string, throwOnFail = true): boolean {
-    // console.log(user, permission);
-    // if (user?.owner) return true;
+    if (user?.owner) return true;
     if (user?.permissions && user?.permissions.length) {
         const [group, action] = permission.split('.');
         if (
