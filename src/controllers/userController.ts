@@ -26,12 +26,16 @@ export default {
             email: 'email|max:254|required|unique:users,email',
             first_name: 'string|required',
             last_name: 'string|required',
+            role_id: 'number|required',
+            active: 'boolean|required',
         };
         const messages = {
             'email.required': 'Email address is a required field',
             'email.email': 'Email address must be valid',
             'first_name.required': 'First name is a required field',
             'last_name.required': 'Last name is a required field',
+            'role_id.required': 'Role is a required field',
+            'active.required': 'Status is a required field',
         };
         const {email, first_name, last_name} = await validateInput(req.body, schema, messages);
 
@@ -88,6 +92,8 @@ export default {
             email: `email|max:254|required|unique:users,email,id,${req.params?.id}`,
             first_name: 'string|required',
             last_name: 'string|required',
+            active: `boolean|required_if_db_value:users,owner,0,id,${req.params?.id}`,
+            role_id: `number|required_if_db_value:users,owner,0,id,${req.params?.id}`,
         };
         const messages = {
             'id.required': 'User ID is invalid',
@@ -96,17 +102,29 @@ export default {
             'email.email': 'Email address must be valid',
             'first_name.required': 'First name is a required field',
             'last_name.required': 'Last name is a required field',
+            'active.boolean': 'Status is invalid',
+            'active.required': 'Status is a required field',
+            'role_id.required_if_db_value': 'Role is invalid',
         };
-        const {id, email, first_name, last_name} = await validateInput({...req.body, ...req.params}, schema, messages);
+        const {id, email, first_name, last_name, role_id, active} = await validateInput(
+            {...req.body, ...req.params},
+            schema,
+            messages,
+        );
 
-        const userExists = await User.query().findById(id);
+        const existingUser = await User.query().findById(id);
 
-        if (!userExists) throw new ResourceNotFoundException();
+        if (!existingUser) throw new ResourceNotFoundException();
 
         const user = await User.query().updateAndFetchById(id, {
             email,
             first_name,
             last_name,
+            // Can't change owner status
+            owner: existingUser.owner,
+            // Owner doesn't need a role
+            role_id: existingUser.owner ? null : role_id,
+            active,
         });
 
         return res.json(user);

@@ -22,7 +22,7 @@ export function customValidationRules(knex: Knex): void {
         async: true,
         compile: function (args) {
             if (args.length < 2) {
-                throw new Error('Unique rule needs the table and column name');
+                throw new Error('Unique if database rule is missing arguments');
             }
             return args;
         },
@@ -44,6 +44,27 @@ export function customValidationRules(knex: Knex): void {
                 .first();
 
             return !record;
+        },
+    });
+    extend('requiredIfDbValue', {
+        async: true,
+        compile: function (args) {
+            if (args.length < 5) {
+                throw new Error('Required if database rule is missing arguments');
+            }
+            return args;
+        },
+        validate: async function (data, field, args) {
+            const fieldValue = getValue(data, field);
+
+            if (skippable(fieldValue, field, {existyStrict: true})) {
+                return true;
+            }
+
+            const notOwner = await knex(args[0]).select().where(args[1], args[2]).andWhere(args[3], args[4]).first();
+
+            if (notOwner && (!fieldValue || fieldValue === '')) return false;
+            return true;
         },
     });
 }
