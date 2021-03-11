@@ -4,6 +4,7 @@ import authMiddleware from './middleware/auth';
 import authController from './controllers/authController';
 import setPasswordController from './controllers/setPasswordController';
 import userController from './controllers/userController';
+import roleController from './controllers/roleController';
 
 const router = Router();
 
@@ -21,5 +22,7 @@ router.get('/users', authMiddleware, asyncHandler(userController.index));
 router.post('/users', authMiddleware, asyncHandler(userController.store));
 router.put('/users/:id', authMiddleware, asyncHandler(userController.update));
 router.delete('/users/:id', authMiddleware, asyncHandler(userController.destroy));
+
+router.get('/roles', authMiddleware, asyncHandler(roleController.index));
 
 export default router;
