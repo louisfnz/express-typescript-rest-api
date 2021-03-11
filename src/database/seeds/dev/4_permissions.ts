@@ -8,47 +8,52 @@ import Permission from '../../../models/Permission';
 const knex = Knex(knexConfig);
 Model.knex(knex);
 
-export async function seed(): Promise<void> {
-    const date = mysqlDate(new Date());
-
-    const userRole = await Role.query().findOne({slug: 'user'});
-    const adminRole = await Role.query().findOne({slug: 'admin'});
-    const userPermissions = await Permission.query().insertGraphAndFetch([
+const createResourcePermissions = (group: string, date: string) => {
+    return [
         {
-            group: 'users',
+            group,
             action: 'show',
-            title: 'View users',
+            title: `View ${group}s`,
             order: 1,
             created_at: date,
             updated_at: date,
         },
         {
-            group: 'users',
+            group,
             action: 'store',
-            title: 'Create users',
+            title: `Create ${group}s`,
             order: 2,
             created_at: date,
             updated_at: date,
         },
         {
-            group: 'users',
+            group,
             action: 'update',
-            title: 'Update users',
+            title: `Update ${group}s`,
             order: 3,
             created_at: date,
             updated_at: date,
         },
         {
-            group: 'users',
+            group,
             action: 'destroy',
-            title: 'Delete users',
+            title: `Delete ${group}s`,
             order: 4,
             created_at: date,
             updated_at: date,
         },
-    ]);
+    ];
+};
 
-    for (const permission of userPermissions) {
+export async function seed(): Promise<void> {
+    const date = mysqlDate(new Date());
+
+    const adminRole = await Role.query().findOne({name: 'Admin'});
+    const userRole = await Role.query().findOne({name: 'User'});
+    const userPermissions = await Permission.query().insertGraphAndFetch(createResourcePermissions('user', date));
+    const rolePermissions = await Permission.query().insertGraphAndFetch(createResourcePermissions('role', date));
+
+    for (const permission of [...userPermissions, ...rolePermissions]) {
         if (permission.action === 'view') {
             await permission.$relatedQuery('roles').relate(userRole);
         }

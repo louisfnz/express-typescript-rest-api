@@ -10,11 +10,9 @@ export async function seed(): Promise<void> {
     await Role.query().insertGraph([
         {
             name: 'Admin',
-            slug: 'admin',
         },
         {
             name: 'User',
-            slug: 'user',
         },
     ]);
 }
